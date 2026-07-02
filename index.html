@@ -5,14 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Архитектор ошибочных траекторий</title>
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
 
     <style>
         * {
@@ -29,7 +25,6 @@
                 radial-gradient(ellipse at 90% 80%, rgba(124, 58, 237, 0.04) 0%, transparent 60%);
         }
 
-        /* ===== АНИМАЦИИ ===== */
         @keyframes fadeSlideUp {
             from {
                 opacity: 0;
@@ -38,35 +33,6 @@
             to {
                 opacity: 1;
                 transform: translateY(0);
-            }
-        }
-
-        @keyframes pulseGlow {
-            0%,
-            100% {
-                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.2);
-            }
-            50% {
-                box-shadow: 0 0 0 8px rgba(79, 70, 229, 0);
-            }
-        }
-
-        @keyframes float {
-            0%,
-            100% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(-4px);
-            }
-        }
-
-        @keyframes shimmer {
-            0% {
-                background-position: -200% 0;
-            }
-            100% {
-                background-position: 200% 0;
             }
         }
 
@@ -81,21 +47,28 @@
             }
         }
 
+        @keyframes pulseGlow {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(79, 70, 229, 0);
+            }
+        }
+
         .animate-fade-up {
             animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-
         .animate-fade-up-delay {
             animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
             opacity: 0;
         }
-
         .animate-fade-up-delay-2 {
             animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
             opacity: 0;
         }
 
-        /* ===== КАРТОЧКИ ===== */
         .glass-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
@@ -118,7 +91,6 @@
             box-shadow: 0 12px 48px rgba(0, 0, 0, 0.08);
         }
 
-        /* ===== КНОПКИ ===== */
         .btn-primary {
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: white;
@@ -138,11 +110,6 @@
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 32px rgba(79, 70, 229, 0.35);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
         }
 
         .btn-success {
@@ -187,7 +154,27 @@
             transform: translateY(-2px);
         }
 
-        /* ===== СТУДЕНТ-КАРТОЧКА В СПИСКЕ ===== */
+        .btn-danger-outline {
+            background: transparent;
+            color: #dc2626;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            border: 2px solid #fecaca;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-danger-outline:hover {
+            border-color: #dc2626;
+            background: #fef2f2;
+            transform: translateY(-2px);
+        }
+
         .student-item {
             background: white;
             border-radius: 14px;
@@ -195,7 +182,6 @@
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             border: 2px solid transparent;
-            position: relative;
             animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
@@ -211,22 +197,6 @@
             pointer-events: none;
         }
 
-        .student-item.sent .sent-badge {
-            display: inline-flex;
-        }
-
-        .student-item .sent-badge {
-            display: none;
-            background: #22c55e;
-            color: white;
-            font-size: 11px;
-            padding: 2px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            align-items: center;
-            gap: 4px;
-        }
-
         .student-item .error-badge {
             background: #fef2f2;
             color: #dc2626;
@@ -234,36 +204,33 @@
             border-radius: 20px;
             font-size: 13px;
             font-weight: 600;
-            transition: all 0.2s;
         }
 
-        .student-item:hover .error-badge {
-            background: #fee2e2;
-        }
-
-        /* ===== ПРОГРЕСС-АЙТЕМ ===== */
-        .progress-item {
-            padding: 14px 16px;
-            background: #f8fafc;
-            border-radius: 12px;
-            border-left: 4px solid #22c55e;
-            margin-bottom: 10px;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .progress-item:hover {
-            background: #f1f5f9;
-            transform: translateX(4px);
-        }
-
-        .progress-item .status-badge {
-            font-size: 12px;
-            font-weight: 600;
-            padding: 2px 12px;
+        .student-item .sent-badge {
+            background: #dcfce7;
+            color: #16a34a;
+            padding: 2px 14px;
             border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
         }
 
-        /* ===== ФАКТ-БАБЛ ===== */
+        .all-student-item {
+            background: white;
+            border-radius: 14px;
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 2px solid transparent;
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .all-student-item:hover {
+            border-color: #4f46e5;
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.06);
+        }
+
         .fact-bubble {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f4f9 100%);
             padding: 24px 28px;
@@ -275,12 +242,6 @@
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
-        .fact-bubble .greeting {
-            font-weight: 600;
-            color: #0f172a;
-        }
-
-        /* ===== ТАБЛИЦА ===== */
         .error-table {
             width: 100%;
             font-size: 14px;
@@ -303,7 +264,6 @@
         .error-table th:first-child {
             border-radius: 10px 0 0 0;
         }
-
         .error-table th:last-child {
             border-radius: 0 10px 0 0;
         }
@@ -332,35 +292,6 @@
             font-weight: 500;
         }
 
-        /* ===== ТОСТ ===== */
-        .toast {
-            position: fixed;
-            bottom: 32px;
-            right: 32px;
-            background: #1e293b;
-            color: white;
-            padding: 16px 28px;
-            border-radius: 16px;
-            font-weight: 500;
-            font-size: 14px;
-            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
-            transform: translateY(120px) scale(0.95);
-            opacity: 0;
-            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            backdrop-filter: blur(12px);
-            background: rgba(30, 41, 59, 0.92);
-        }
-
-        .toast.show {
-            transform: translateY(0) scale(1);
-            opacity: 1;
-        }
-
-        /* ===== HEADER ===== */
         .header-gradient {
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #6d28d9 100%);
             position: relative;
@@ -378,18 +309,6 @@
             pointer-events: none;
         }
 
-        .header-gradient::after {
-            content: '';
-            position: absolute;
-            bottom: -30%;
-            left: -10%;
-            width: 50%;
-            height: 150%;
-            background: radial-gradient(ellipse, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        /* ===== БЭДЖ СТАТУСА ===== */
         .status-dot {
             display: inline-block;
             width: 8px;
@@ -398,36 +317,11 @@
             animation: pulseGlow 2s infinite;
         }
 
-        .status-dot.warning {
-            background: #eab308;
-        }
-
         .status-dot.success {
             background: #22c55e;
             animation: none;
         }
 
-        .status-dot.danger {
-            background: #ef4444;
-        }
-
-        /* ===== СКРОЛЛ ===== */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        /* ===== BACK BUTTON ===== */
         .back-button {
             display: inline-flex;
             align-items: center;
@@ -448,12 +342,36 @@
             transform: translateX(-6px);
         }
 
-        /* ===== VIEW TRANSITION ===== */
         .view-transition {
             animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* ===== ПУСТЫЕ СОСТОЯНИЯ ===== */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            background: rgba(30, 41, 59, 0.92);
+            backdrop-filter: blur(12px);
+            color: white;
+            padding: 16px 28px;
+            border-radius: 16px;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+            transform: translateY(120px) scale(0.95);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast.show {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
         .empty-state {
             text-align: center;
             padding: 32px 16px;
@@ -466,7 +384,143 @@
             opacity: 0.5;
         }
 
-        /* ===== МЕДИА ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 640px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: fadeSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-input.error {
+            border-color: #dc2626;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .error-row {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px 14px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .error-row:hover {
+            border-color: #cbd5e1;
+            background: #f1f5f9;
+        }
+
+        .error-row .remove-error {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .error-row .remove-error:hover {
+            color: #dc2626;
+            background: #fef2f2;
+        }
+
+        .error-row .form-input {
+            background: white;
+        }
+
+        .add-error-btn {
+            background: transparent;
+            border: 2px dashed #cbd5e1;
+            border-radius: 10px;
+            padding: 12px;
+            width: 100%;
+            color: #64748b;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .add-error-btn:hover {
+            border-color: #4f46e5;
+            color: #4f46e5;
+            background: rgba(79, 70, 229, 0.04);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
         @media (max-width: 768px) {
             .fact-bubble {
                 padding: 18px 20px;
@@ -474,7 +528,8 @@
             }
             .btn-primary,
             .btn-success,
-            .btn-outline {
+            .btn-outline,
+            .btn-danger-outline {
                 padding: 10px 18px;
                 font-size: 13px;
                 width: 100%;
@@ -487,24 +542,89 @@
             .error-table td {
                 padding: 10px 12px;
             }
+            .modal-content {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- ============================================================ -->
-    <!-- TOAST                                                          -->
-    <!-- ============================================================ -->
+    <!-- TOAST -->
     <div class="toast" id="toast">
-        <span id="toastIcon" class="text-xl">✅</span>
-        <span id="toastMessage">Текст скопирован!</span>
+        <span id="toastIcon">✅</span>
+        <span id="toastMessage">Готово!</span>
     </div>
 
+    <!-- МОДАЛ: Добавить ученика -->
+    <div class="modal-overlay" id="modalAddStudent">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-user-plus text-indigo-500"></i>
+                    Добавить ученика
+                </h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="addStudentForm" onsubmit="handleAddStudent(event)">
+                <!-- Основная информация -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="form-label">ФИО ученика *</label>
+                        <input type="text" id="formName" class="form-input" placeholder="Иванов Иван" required />
+                    </div>
+                    <div>
+                        <label class="form-label">Класс *</label>
+                        <input type="text" id="formClass" class="form-input" placeholder="7Б" required />
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Описание ошибки</label>
+                    <input type="text" id="formErrorDesc" class="form-input" placeholder="Перемножает показатели степени вместо сложения" />
+                    <div class="form-hint">Кратко опишите, в чём суть основной проблемы</div>
+                </div>
+
+                <!-- Ошибки -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="form-label mb-0">Примеры ошибок</label>
+                        <span class="text-xs text-gray-400" id="errorCountLabel">0 ошибок</span>
+                    </div>
+                    <div id="errorsContainer" class="space-y-3">
+                        <!-- Ошибки будут добавляться сюда -->
+                    </div>
+                    <button type="button" class="add-error-btn mt-3" onclick="addErrorRow()">
+                        <i class="fas fa-plus mr-2"></i> Добавить пример ошибки
+                    </button>
+                </div>
+
+                <!-- Текст для родителя -->
+                <div class="mb-5">
+                    <label class="form-label">Текст для родителя</label>
+                    <textarea id="formFact" class="form-input" rows="4" placeholder="Уважаемые родители!..."></textarea>
+                    <div class="form-hint">Готовый текст, который вы скопируете для отправки</div>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="btn-primary flex-1 justify-center">
+                        <i class="fas fa-save"></i> Сохранить
+                    </button>
+                    <button type="button" onclick="closeModal()" class="btn-outline flex-1 justify-center">
+                        Отмена
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ОСНОВНОЙ КОНТЕЙНЕР -->
     <div class="max-w-6xl mx-auto px-4 py-6 md:py-8" id="app">
 
-        <!-- ============================================================ -->
-        <!-- ЭКРАН 1: ДАШБОРД                                              -->
-        <!-- ============================================================ -->
+        <!-- ЭКРАН 1: ДАШБОРД -->
         <div id="screenDashboard" class="view-transition">
 
             <!-- Шапка -->
@@ -513,9 +633,9 @@
                     <div>
                         <div class="flex items-center gap-2 text-sm opacity-80 mb-1.5">
                             <i class="fas fa-calendar-alt"></i>
-                            Понедельник, 15 сентября
+                            <span id="currentDate"></span>
                             <span class="w-1 h-1 rounded-full bg-white/40 mx-2"></span>
-                            <span class="opacity-80">Неделя 38</span>
+                            <span class="opacity-80">Неделя <span id="currentWeek">38</span></span>
                         </div>
                         <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">
                             Ваш еженедельный дашборд
@@ -523,16 +643,22 @@
                         <p class="text-sm opacity-90 mt-1 flex items-center gap-2">
                             <span class="inline-flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full text-xs font-medium">
                                 <i class="fas fa-users"></i>
-                                <span id="attentionCount">3</span>
+                                <span id="attentionCount">0</span>
                             </span>
                             ученика требуют внимания
                         </p>
                     </div>
-                    <div class="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2.5 border border-white/10">
-                        <i class="fas fa-rotate-right text-white/60 text-sm"></i>
-                        <span class="text-sm font-medium">Автообновление</span>
-                        <span class="w-1 h-1 rounded-full bg-white/30"></span>
-                        <span class="text-xs opacity-60">активно</span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="openModal()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all backdrop-blur-sm flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Добавить
+                        </button>
+                        <button onclick="importCSV()" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all backdrop-blur-sm flex items-center gap-2">
+                            <i class="fas fa-file-import"></i> Импорт
+                        </button>
+                        <button onclick="exportDatabase()" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all backdrop-blur-sm flex items-center gap-2">
+                            <i class="fas fa-download"></i> Бэкап
+                        </button>
+                        <input type="file" id="csvInput" accept=".csv,.json" style="display:none" onchange="handleImportFile(event)" />
                     </div>
                 </div>
             </div>
@@ -547,10 +673,14 @@
                             <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                             Требуют внимания
                         </h2>
-                        <span class="bg-red-50 text-red-600 text-xs font-bold px-3 py-1 rounded-full" id="badgeCount">3</span>
+                        <span class="bg-red-50 text-red-600 text-xs font-bold px-3 py-1 rounded-full" id="badgeCount">0</span>
                     </div>
                     <div id="studentList" class="space-y-2.5">
-                        <!-- Список из JS -->
+                        <div class="empty-state">
+                            <div class="icon">🎉</div>
+                            <p class="font-medium text-gray-600">Нет активных учеников</p>
+                            <p class="text-xs text-gray-400 mt-1">Все сообщения отправлены</p>
+                        </div>
                     </div>
                 </div>
 
@@ -568,79 +698,74 @@
                             <i class="fas fa-envelope-open-text text-purple-400 mr-1.5"></i>
                             Подготовлены сообщения для
                         </p>
-                        <p class="font-semibold text-gray-800 text-lg" id="factsReadyCount">трёх учеников</p>
+                        <p class="font-semibold text-gray-800 text-lg" id="factsReadyCount">0 учеников</p>
                         <div class="mt-3 flex flex-wrap gap-2" id="factsReadyList">
-                            <!-- Список имён -->
+                            <span class="text-gray-400 text-sm">—</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Колонка 3: Прогресс -->
+                <!-- Колонка 3: Все ученики -->
                 <div class="glass-card rounded-2xl p-5 md:p-6 card-hover animate-fade-up-delay-2">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="font-semibold text-gray-700 text-xs uppercase tracking-wider flex items-center gap-2">
-                            <i class="fas fa-chart-line text-green-500"></i>
-                            Прогресс
+                            <i class="fas fa-users text-blue-500"></i>
+                            Все ученики
                         </h2>
-                        <span class="bg-green-50 text-green-600 text-xs font-bold px-3 py-1 rounded-full">
-                            <i class="fas fa-arrow-up mr-1"></i> +2
-                        </span>
+                        <span class="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-full" id="allCount">0</span>
                     </div>
-                    <div id="progressList" class="space-y-2">
-                        <!-- Прогресс из JS -->
+                    <div id="allStudentsList" class="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                        <div class="empty-state">
+                            <div class="icon">📚</div>
+                            <p class="text-gray-500 text-sm">Нет учеников</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Подвал дашборда -->
-            <div class="mt-8 flex items-center justify-between text-xs text-gray-400 border-t border-gray-100/80 pt-4">
+            <!-- Подвал -->
+            <div class="mt-8 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400 border-t border-gray-100/80 pt-4">
                 <span>
                     <i class="fas fa-database mr-1.5"></i>
-                    Данные актуальны на 15.09.2026
+                    Данные хранятся локально · <span id="totalCount">0</span> учеников
                 </span>
                 <span class="flex items-center gap-4">
                     <span class="flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
-                        <span>MVP v1.0</span>
+                        <span>SQLite в браузере</span>
                     </span>
                     <span class="text-gray-300">·</span>
-                    <span>3 активных ученика</span>
+                    <span>v2.0</span>
                 </span>
             </div>
         </div>
 
-        <!-- ============================================================ -->
-        <!-- ЭКРАН 2: КАРТОЧКА УЧЕНИКА                                     -->
-        <!-- ============================================================ -->
+        <!-- ЭКРАН 2: ПРОФИЛЬ УЧЕНИКА -->
         <div id="screenStudent" class="view-transition" style="display:none;">
 
-            <!-- Кнопка назад -->
             <button class="back-button" onclick="goToDashboard()">
                 <i class="fas fa-arrow-left"></i>
                 Назад к списку
             </button>
 
-            <!-- Карточка -->
             <div class="glass-card rounded-2xl p-6 md:p-8 mt-4 card-hover">
                 <!-- Заголовок -->
                 <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h2 class="text-2xl md:text-3xl font-extrabold text-gray-900" id="studentName">Петров Дима</h2>
+                        <h2 class="text-2xl md:text-3xl font-extrabold text-gray-900" id="studentName">—</h2>
                         <p class="text-gray-500 text-sm mt-0.5 flex items-center gap-2">
                             <i class="fas fa-graduation-cap text-gray-300"></i>
-                            <span id="studentClass">7Б</span>
+                            <span id="studentClass">—</span>
                             <span class="w-1 h-1 rounded-full bg-gray-300"></span>
                             <span>Математика</span>
+                            <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+                            <span id="studentStatus" class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Не отправлено</span>
                         </p>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-wrap">
                         <div class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
                             <i class="fas fa-exclamation-triangle text-red-400"></i>
-                            <span id="studentErrorCount">3</span> ошибки
-                        </div>
-                        <div class="bg-gray-50 text-gray-400 px-3 py-2 rounded-xl text-xs font-medium">
-                            <i class="far fa-clock mr-1"></i>
-                            за месяц
+                            <span id="studentErrorCount">0</span> ошибок
                         </div>
                     </div>
                 </div>
@@ -655,18 +780,18 @@
                     </div>
                     <div class="bg-purple-50/60 rounded-2xl px-5 py-4 text-gray-700 text-sm border border-purple-100/50">
                         <i class="fas fa-quote-left text-purple-300 mr-2 opacity-50"></i>
-                        <span id="studentErrorDescription">Перемножают показатели степени вместо сложения.</span>
+                        <span id="studentErrorDescription">—</span>
                     </div>
                 </div>
 
-                <!-- 2. Примеры из работ -->
+                <!-- 2. История ошибок -->
                 <div class="mb-6">
                     <div class="flex items-center gap-2 mb-3">
                         <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
-                            <i class="fas fa-table text-sm"></i>
+                            <i class="fas fa-history text-sm"></i>
                         </div>
-                        <h3 class="font-bold text-gray-800 text-sm">Примеры из работ</h3>
-                        <span class="text-xs text-gray-400 font-medium ml-auto">за сентябрь</span>
+                        <h3 class="font-bold text-gray-800 text-sm">История ошибок</h3>
+                        <span class="text-xs text-gray-400 font-medium ml-auto">все записи</span>
                     </div>
                     <div class="overflow-x-auto rounded-2xl border border-gray-100/80">
                         <table class="error-table" id="errorTable">
@@ -674,11 +799,12 @@
                                 <tr>
                                     <th>Дата</th>
                                     <th>Тема</th>
-                                    <th>Ошибка</th>
+                                    <th>Что написал</th>
+                                    <th>Правильно</th>
                                 </tr>
                             </thead>
                             <tbody id="errorTableBody">
-                                <!-- Данные из JS -->
+                                <tr><td colspan="4" class="text-center text-gray-400 py-4">Нет ошибок</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -697,26 +823,26 @@
                     </div>
 
                     <div class="fact-bubble" id="factText">
-                        <!-- Текст из JS -->
+                        <span class="text-gray-400">Текст не заполнен</span>
                     </div>
 
                     <div class="flex flex-wrap gap-3 mt-5">
                         <button class="btn-primary" onclick="copyFact()">
-                            <i class="fas fa-copy"></i>
-                            Скопировать текст
+                            <i class="fas fa-copy"></i> Скопировать
                         </button>
                         <button class="btn-success" onclick="markAsSent()">
-                            <i class="fas fa-check"></i>
-                            Отметить как отправленное
+                            <i class="fas fa-check"></i> Отправить
                         </button>
-                        <button class="btn-outline" onclick="copyFact()">
-                            <i class="fas fa-pen"></i>
-                            Редактировать
+                        <button class="btn-outline" onclick="editFact()">
+                            <i class="fas fa-pen"></i> Редактировать
+                        </button>
+                        <button class="btn-danger-outline" onclick="deleteStudent()">
+                            <i class="fas fa-trash"></i> Удалить
                         </button>
                     </div>
                     <p class="text-xs text-gray-400 mt-4 flex items-center gap-1.5">
                         <i class="fas fa-info-circle text-gray-300"></i>
-                        После отправки ученик переместится в архив на дашборде
+                        После отправки ученик переместится в архив
                     </p>
                 </div>
             </div>
@@ -726,20 +852,303 @@
 
     <script>
         // ================================================================
-        // ДАННЫЕ
+        // 1. SQLite ИНИЦИАЛИЗАЦИЯ
         // ================================================================
 
-        const STUDENTS_DATA = [{
-            id: 1,
-            name: 'Петров Дима',
-            class: '7Б',
-            errorDescription: 'Перемножают показатели степени вместо сложения.',
-            errors: [
-                { date: '14.09', topic: 'Умножение степеней', text: 'a² × a³ = a⁶', correct: 'a⁵' },
-                { date: '21.09', topic: 'Умножение степеней', text: 'b⁴ × b² = b⁸', correct: 'b⁶' },
-                { date: '28.09', topic: 'Возведение в степень', text: '(x²)³ = x⁵', correct: 'x⁶' }
-            ],
-            fact: `Уважаемая Елена Сергеевна!
+        let db = null;
+        let currentStudentId = null;
+        let editingFact = false;
+        let errorRows = [];
+
+        async function initDatabase() {
+            try {
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+
+                const saved = localStorage.getItem('students_db');
+                if (saved) {
+                    try {
+                        const binary = atob(saved.split(',')[1]);
+                        const bytes = new Uint8Array(binary.length);
+                        for (let i = 0; i < binary.length; i++) {
+                            bytes[i] = binary.charCodeAt(i);
+                        }
+                        db = new SQL.Database(bytes);
+                    } catch (e) {
+                        console.warn('Ошибка загрузки БД, создаём новую');
+                        db = new SQL.Database();
+                    }
+                } else {
+                    db = new SQL.Database();
+                }
+
+                db.run(`
+                    CREATE TABLE IF NOT EXISTS students (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT NOT NULL,
+                        class_name TEXT NOT NULL,
+                        error_description TEXT,
+                        fact TEXT,
+                        sent INTEGER DEFAULT 0,
+                        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                    )
+                `);
+
+                db.run(`
+                    CREATE TABLE IF NOT EXISTS errors (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        student_id INTEGER NOT NULL,
+                        date TEXT NOT NULL,
+                        topic TEXT NOT NULL,
+                        error_text TEXT NOT NULL,
+                        correct_text TEXT,
+                        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+                    )
+                `);
+
+                const count = db.exec('SELECT COUNT(*) as count FROM students');
+                const hasData = count[0]?.values[0][0] > 0;
+
+                if (!hasData) {
+                    seedDatabase();
+                }
+
+                saveToStorage();
+                updateDate();
+                renderDashboard();
+
+                console.log('🏗️ SQLite инициализирован');
+                console.log(`📊 Всего учеников: ${getAllStudents().length}`);
+
+            } catch (error) {
+                console.error('Ошибка инициализации SQLite:', error);
+                document.getElementById('studentList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">❌</div>
+                        <p class="font-medium text-red-600">Ошибка загрузки БД</p>
+                        <p class="text-xs text-gray-400 mt-1">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ================================================================
+        // 2. РАБОТА С БАЗОЙ ДАННЫХ
+        // ================================================================
+
+        function saveToStorage() {
+            if (!db) return;
+            try {
+                const data = db.export();
+                const buffer = new Uint8Array(data);
+                const blob = new Blob([buffer]);
+                const reader = new FileReader();
+                reader.onload = function() {
+                    localStorage.setItem('students_db', reader.result);
+                };
+                reader.readAsDataURL(blob);
+            } catch (e) {
+                console.warn('Ошибка сохранения:', e);
+            }
+        }
+
+        function parseStudents(result) {
+            if (!result || result.length === 0) return [];
+            const row = result[0];
+            const columns = row.columns;
+            const students = [];
+
+            for (const values of row.values) {
+                const obj = {};
+                columns.forEach((col, idx) => {
+                    obj[col] = values[idx];
+                });
+
+                if (obj.errors_data) {
+                    const errors = obj.errors_data.split(',').filter(e => e);
+                    obj.errors = errors.map(e => {
+                        const parts = e.split('||');
+                        return {
+                            date: parts[0] || '',
+                            topic: parts[1] || '',
+                            error_text: parts[2] || '',
+                            correct_text: parts[3] || ''
+                        };
+                    });
+                } else {
+                    obj.errors = [];
+                }
+                delete obj.errors_data;
+
+                obj.id = Number(obj.id);
+                obj.sent = Number(obj.sent) === 1;
+
+                students.push(obj);
+            }
+            return students;
+        }
+
+        function getAllStudents() {
+            try {
+                const result = db.exec(`
+                    SELECT s.*, 
+                           GROUP_CONCAT(e.date || '||' || e.topic || '||' || e.error_text || '||' || e.correct_text) as errors_data
+                    FROM students s
+                    LEFT JOIN errors e ON s.id = e.student_id
+                    GROUP BY s.id
+                    ORDER BY s.id DESC
+                `);
+                return parseStudents(result);
+            } catch (e) {
+                console.error('getAllStudents error:', e);
+                return [];
+            }
+        }
+
+        function getActiveStudents() {
+            try {
+                const result = db.exec(`
+                    SELECT s.*, COUNT(e.id) as error_count,
+                           GROUP_CONCAT(e.date || '||' || e.topic || '||' || e.error_text || '||' || e.correct_text) as errors_data
+                    FROM students s
+                    LEFT JOIN errors e ON s.id = e.student_id
+                    WHERE s.sent = 0
+                    GROUP BY s.id
+                    HAVING COUNT(e.id) >= 2
+                    ORDER BY error_count DESC
+                `);
+                return parseStudents(result);
+            } catch (e) {
+                console.error('getActiveStudents error:', e);
+                return [];
+            }
+        }
+
+        function getStudent(id) {
+            try {
+                const result = db.exec(`
+                    SELECT s.*, 
+                           GROUP_CONCAT(e.id || '||' || e.date || '||' || e.topic || '||' || e.error_text || '||' || e.correct_text) as errors_data
+                    FROM students s
+                    LEFT JOIN errors e ON s.id = e.student_id
+                    WHERE s.id = ${id}
+                    GROUP BY s.id
+                `);
+                const students = parseStudents(result);
+                return students[0] || null;
+            } catch (e) {
+                console.error('getStudent error:', e);
+                return null;
+            }
+        }
+
+        function getStudentErrors(id) {
+            try {
+                const result = db.exec(`
+                    SELECT date, topic, error_text, correct_text
+                    FROM errors
+                    WHERE student_id = ${id}
+                    ORDER BY id DESC
+                `);
+                if (result.length === 0) return [];
+                const cols = result[0].columns;
+                return result[0].values.map(row => {
+                    const obj = {};
+                    cols.forEach((col, idx) => { obj[col] = row[idx]; });
+                    return obj;
+                });
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function createStudent(name, className, errorDescription, errors, fact) {
+            try {
+                db.run(`
+                    INSERT INTO students (name, class_name, error_description, fact)
+                    VALUES (?, ?, ?, ?)
+                `, [name, className, errorDescription || '', fact || '']);
+
+                const result = db.exec('SELECT last_insert_rowid() as id');
+                const studentId = result[0].values[0][0];
+
+                for (const err of errors) {
+                    db.run(`
+                        INSERT INTO errors (student_id, date, topic, error_text, correct_text)
+                        VALUES (?, ?, ?, ?, ?)
+                    `, [studentId, err.date || '', err.topic || '', err.error_text || '', err.correct_text || '']);
+                }
+
+                saveToStorage();
+                return studentId;
+            } catch (e) {
+                console.error('createStudent error:', e);
+                return null;
+            }
+        }
+
+        function updateStudent(id, data) {
+            try {
+                const updates = [];
+                const values = [];
+
+                if (data.name !== undefined) { updates.push('name = ?');
+                    values.push(data.name); }
+                if (data.class_name !== undefined) { updates.push('class_name = ?');
+                    values.push(data.class_name); }
+                if (data.error_description !== undefined) { updates.push('error_description = ?');
+                    values.push(data.error_description); }
+                if (data.fact !== undefined) { updates.push('fact = ?');
+                    values.push(data.fact); }
+                if (data.sent !== undefined) { updates.push('sent = ?');
+                    values.push(data.sent ? 1 : 0); }
+
+                if (updates.length === 0) return;
+
+                updates.push('updated_at = CURRENT_TIMESTAMP');
+                values.push(id);
+
+                db.run(`UPDATE students SET ${updates.join(', ')} WHERE id = ?`, values);
+                saveToStorage();
+            } catch (e) {
+                console.error('updateStudent error:', e);
+            }
+        }
+
+        function markAsSentDB(id) {
+            updateStudent(id, { sent: true });
+        }
+
+        function deleteStudentDB(id) {
+            try {
+                db.run(`DELETE FROM errors WHERE student_id = ?`, [id]);
+                db.run(`DELETE FROM students WHERE id = ?`, [id]);
+                saveToStorage();
+            } catch (e) {
+                console.error('deleteStudentDB error:', e);
+            }
+        }
+
+        // ================================================================
+        // 3. ДЕМО-ДАННЫЕ
+        // ================================================================
+
+        function seedDatabase() {
+            const demoData = [{
+                name: 'Петров Дима',
+                class_name: '7Б',
+                error_description: 'Перемножает показатели степени вместо сложения.',
+                errors: [
+                    { date: '14.09', topic: 'Умножение степеней', error_text: 'a² × a³ = a⁶',
+                    correct_text: 'a⁵' },
+                    { date: '21.09', topic: 'Умножение степеней', error_text: 'b⁴ × b² = b⁸',
+                    correct_text: 'b⁶' },
+                    { date: '28.09', topic: 'Возведение в степень', error_text: '(x²)³ = x⁵',
+                    correct_text: 'x⁶' }
+                ],
+                fact: `Уважаемая Елена Сергеевна!
 
         За последний месяц у Димы трижды повторяется одна и та же ошибка: при умножении степеней с одинаковым основанием он перемножает показатели, хотя по правилу их нужно складывать.
 
@@ -749,19 +1158,18 @@
 
         Если у вас есть возможность, позанимайтесь с ним дома по этой теме 5–7 минут в день.
 
-        Алексей Сергеевич`,
-            sent: false,
-            avatar: 'Д'
-        }, {
-            id: 2,
-            name: 'Иванова Алина',
-            class: '6А',
-            errorDescription: 'Путает знаки при раскрытии скобок.',
-            errors: [
-                { date: '12.09', topic: 'Раскрытие скобок', text: '–(a + b) = –a + b', correct: '–a – b' },
-                { date: '18.09', topic: 'Раскрытие скобок', text: '–(x – y) = –x – y', correct: '–x + y' }
-            ],
-            fact: `Уважаемый Игорь Петрович!
+        Алексей Сергеевич`
+            }, {
+                name: 'Иванова Алина',
+                class_name: '6А',
+                error_description: 'Путает знаки при раскрытии скобок.',
+                errors: [
+                    { date: '12.09', topic: 'Раскрытие скобок', error_text: '–(a + b) = –a + b',
+                        correct_text: '–a – b' },
+                    { date: '18.09', topic: 'Раскрытие скобок', error_text: '–(x – y) = –x – y',
+                        correct_text: '–x + y' }
+                ],
+                fact: `Уважаемый Игорь Петрович!
 
         У Алины наблюдается систематическая ошибка при раскрытии скобок с минусом перед ними. Она меняет знак только у первого слагаемого, забывая про остальные.
 
@@ -769,20 +1177,20 @@
 
         Пожалуйста, обратите внимание на эту тему при выполнении домашних заданий.
 
-        Алексей Сергеевич`,
-            sent: false,
-            avatar: 'А'
-        }, {
-            id: 3,
-            name: 'Смирнов Максим',
-            class: '8В',
-            errorDescription: 'Неправильно применяет формулу квадрата суммы.',
-            errors: [
-                { date: '10.09', topic: 'Квадрат суммы', text: '(a + b)² = a² + b²', correct: 'a² + 2ab + b²' },
-                { date: '17.09', topic: 'Квадрат суммы', text: '(x + 3)² = x² + 9', correct: 'x² + 6x + 9' },
-                { date: '24.09', topic: 'Квадрат суммы', text: '(2y + 1)² = 4y² + 1', correct: '4y² + 4y + 1' }
-            ],
-            fact: `Уважаемая Мария Владимировна!
+        Алексей Сергеевич`
+            }, {
+                name: 'Смирнов Максим',
+                class_name: '8В',
+                error_description: 'Неправильно применяет формулу квадрата суммы.',
+                errors: [
+                    { date: '10.09', topic: 'Квадрат суммы', error_text: '(a + b)² = a² + b²',
+                        correct_text: 'a² + 2ab + b²' },
+                    { date: '17.09', topic: 'Квадрат суммы', error_text: '(x + 3)² = x² + 9',
+                        correct_text: 'x² + 6x + 9' },
+                    { date: '24.09', topic: 'Квадрат суммы', error_text: '(2y + 1)² = 4y² + 1',
+                        correct_text: '4y² + 4y + 1' }
+                ],
+                fact: `Уважаемая Мария Владимировна!
 
         Максим систематически пропускает удвоенное произведение при возведении суммы в квадрат. Это классическая ошибка, связанная с механическим запоминанием формулы без понимания.
 
@@ -790,81 +1198,127 @@
 
         Закрепление этой темы дома будет очень полезно.
 
-        Алексей Сергеевич`,
-            sent: false,
-            avatar: 'С'
-        }, {
-            id: 4,
-            name: 'Сидоров Андрей',
-            class: '7А',
-            errorDescription: 'Раньше ошибался в процентах, сейчас исправился.',
-            errors: [
-                { date: '01.09', topic: 'Проценты', text: '50% от 100 = 50 ✓', correct: '50' },
-                { date: '05.09', topic: 'Проценты', text: '25% от 200 = 50 ✓', correct: '50' }
-            ],
-            fact: `Уважаемые родители Андрея!
+        Алексей Сергеевич`
+            }, {
+                name: 'Сидоров Андрей',
+                class_name: '7А',
+                error_description: 'Раньше ошибался в процентах, сейчас исправился.',
+                errors: [
+                    { date: '01.09', topic: 'Проценты', error_text: '50% от 100 = 50 ✓' },
+                    { date: '05.09', topic: 'Проценты', error_text: '25% от 200 = 50 ✓' }
+                ],
+                fact: `Уважаемые родители Андрея!
 
         Хочу отметить положительную динамику. Ранее Андрей испытывал трудности с процентными вычислениями, но за последние две недели ошибок в этой теме не было.
 
         Продолжайте в том же духе!
 
-        Алексей Сергеевич`,
-            sent: false,
-            avatar: 'С'
-        }, {
-            id: 5,
-            name: 'Кузнецова Полина',
-            class: '7Б',
-            errorDescription: 'Раньше путала дроби, сейчас всё верно.',
-            errors: [
-                { date: '02.09', topic: 'Дроби', text: '1/2 + 1/3 = 2/5 (исправлено)' },
-                { date: '08.09', topic: 'Дроби', text: '2/3 – 1/4 = 5/12 ✓' }
-            ],
-            fact: `Уважаемые родители Полины!
+        Алексей Сергеевич`
+            }, {
+                name: 'Кузнецова Полина',
+                class_name: '7Б',
+                error_description: 'Раньше путала дроби, сейчас всё верно.',
+                errors: [
+                    { date: '02.09', topic: 'Дроби', error_text: '1/2 + 1/3 = 2/5 (исправлено)' },
+                    { date: '08.09', topic: 'Дроби', error_text: '2/3 – 1/4 = 5/12 ✓' }
+                ],
+                fact: `Уважаемые родители Полины!
 
         Полина успешно преодолела трудности с операциями над дробями. В последних работах ошибок нет.
 
         Отличный результат!
 
-        Алексей Сергеевич`,
-            sent: false,
-            avatar: 'К'
-        }];
+        Алексей Сергеевич`
+            }];
 
-        // ================================================================
-        // СОСТОЯНИЕ
-        // ================================================================
-
-        let currentStudentId = null;
-
-        // ================================================================
-        // ФУНКЦИИ ОТОБРАЖЕНИЯ
-        // ================================================================
-
-        function getActiveStudents() {
-            return STUDENTS_DATA.filter(s => s.errors.length >= 2 && !s.sent);
+            for (const d of demoData) {
+                createStudent(d.name, d.class_name, d.error_description, d.errors, d.fact);
+            }
+            saveToStorage();
         }
 
-        function getSentStudents() {
-            return STUDENTS_DATA.filter(s => s.sent);
+        // ================================================================
+        // 4. ФОРМА ДОБАВЛЕНИЯ ОШИБОК
+        // ================================================================
+
+        function addErrorRow(date, topic, errorText, correctText) {
+            const container = document.getElementById('errorsContainer');
+            const rowId = Date.now() + Math.random();
+
+            const div = document.createElement('div');
+            div.className = 'error-row';
+            div.dataset.id = rowId;
+            div.innerHTML = `
+                <button type="button" class="remove-error" onclick="removeErrorRow(this)" title="Удалить ошибку">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                    <div>
+                        <input type="text" class="form-input" placeholder="Дата (14.09)" value="${date || ''}" />
+                    </div>
+                    <div>
+                        <input type="text" class="form-input" placeholder="Тема" value="${topic || ''}" />
+                    </div>
+                    <div>
+                        <input type="text" class="form-input" placeholder="Что написал" value="${errorText || ''}" />
+                    </div>
+                    <div>
+                        <input type="text" class="form-input" placeholder="Правильно (опц.)" value="${correctText || ''}" />
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            updateErrorCount();
         }
 
-        function getProgressStudents() {
-            return STUDENTS_DATA.filter(s => s.errors.length < 2 || s.sent);
+        function removeErrorRow(btn) {
+            const row = btn.closest('.error-row');
+            if (row) {
+                row.remove();
+                updateErrorCount();
+            }
         }
+
+        function updateErrorCount() {
+            const rows = document.querySelectorAll('.error-row');
+            document.getElementById('errorCountLabel').textContent = `${rows.length} ошибок`;
+        }
+
+        function getErrorsFromForm() {
+            const rows = document.querySelectorAll('.error-row');
+            const errors = [];
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                const date = inputs[0].value.trim();
+                const topic = inputs[1].value.trim();
+                const errorText = inputs[2].value.trim();
+                const correctText = inputs[3].value.trim();
+                if (date || topic || errorText) {
+                    errors.push({ date, topic, error_text: errorText, correct_text: correctText });
+                }
+            });
+            return errors;
+        }
+
+        // ================================================================
+        // 5. UI РЕНДЕРИНГ
+        // ================================================================
 
         function renderDashboard() {
             const active = getActiveStudents();
-            const sent = getSentStudents();
-            const progress = getProgressStudents();
+            const all = getAllStudents();
 
-            document.getElementById('attentionCount').textContent = active.length;
-            document.getElementById('badgeCount').textContent = active.length;
+            const activeCount = active.length;
 
-            // --- Список учеников ---
+            document.getElementById('attentionCount').textContent = activeCount;
+            document.getElementById('badgeCount').textContent = activeCount;
+            document.getElementById('allCount').textContent = all.length;
+            document.getElementById('totalCount').textContent = all.length;
+
+            // --- Список активных ---
             const listEl = document.getElementById('studentList');
 
-            if (active.length === 0) {
+            if (activeCount === 0) {
                 listEl.innerHTML = `
                     <div class="empty-state">
                         <div class="icon">🎉</div>
@@ -873,29 +1327,30 @@
                     </div>
                 `;
             } else {
-                listEl.innerHTML = active.map(s => `
-                    <div class="student-item ${s.sent ? 'sent' : ''}" onclick="openStudent(${s.id})">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
-                                    ${s.avatar}
+                listEl.innerHTML = active.map(s => {
+                    const avatar = s.name.charAt(0);
+                    const errorCount = s.errors ? s.errors.length : 0;
+                    return `
+                        <div class="student-item" onclick="openStudent(${s.id})">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
+                                        ${avatar}
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-gray-800">${s.name}</div>
+                                        <div class="text-xs text-gray-400">${s.class_name} · ${(s.error_description || '').substring(0, 30)}${(s.error_description || '').length > 30 ? '…' : ''}</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="font-semibold text-gray-800">${s.name}</div>
-                                    <div class="text-xs text-gray-400">${s.class} · ${s.errorDescription.substring(0, 30)}${s.errorDescription.length > 30 ? '…' : ''}</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                ${s.sent ? '<span class="sent-badge"><i class="fas fa-check-circle"></i> отправлено</span>' : ''}
-                                <span class="error-badge">${s.errors.length}</span>
+                                <span class="error-badge">${errorCount}</span>
                             </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
 
             // --- Факты для родителей ---
-            const readyStudents = active.length > 0 ? active : sent;
+            const readyStudents = activeCount > 0 ? active : all.filter(s => s.sent);
             const count = readyStudents.length;
             document.getElementById('factsReadyCount').textContent =
                 count === 0 ? 'нет учеников' :
@@ -916,71 +1371,103 @@
                 }
             }
 
-            // --- Прогресс ---
-            const progressEl = document.getElementById('progressList');
-            if (progress.length === 0) {
-                progressEl.innerHTML = `
+            // --- Все ученики ---
+            const allListEl = document.getElementById('allStudentsList');
+
+            if (all.length === 0) {
+                allListEl.innerHTML = `
                     <div class="empty-state">
-                        <div class="icon">📊</div>
-                        <p class="text-gray-500 text-sm">Нет данных о прогрессе</p>
+                        <div class="icon">📚</div>
+                        <p class="text-gray-500 text-sm">Нет учеников</p>
+                        <p class="text-xs text-gray-400 mt-1">Нажмите "Добавить"</p>
                     </div>
                 `;
             } else {
-                progressEl.innerHTML = progress.map(s => `
-                    <div class="progress-item">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold text-xs">
-                                    ${s.avatar}
+                allListEl.innerHTML = all.map(s => {
+                    const avatar = s.name.charAt(0);
+                    const errorCount = s.errors ? s.errors.length : 0;
+                    const status = s.sent ?
+                        '<span class="sent-badge"><i class="fas fa-check mr-1"></i>отправлено</span>' :
+                        `<span class="error-badge">${errorCount} ошибок</span>`;
+                    return `
+                        <div class="all-student-item" onclick="openStudent(${s.id})">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm flex-shrink-0">
+                                        ${avatar}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-gray-800 text-sm truncate">${s.name}</div>
+                                        <div class="text-xs text-gray-400">${s.class_name}</div>
+                                    </div>
                                 </div>
-                                <span class="font-semibold text-gray-800 text-sm">${s.name}</span>
+                                ${status}
                             </div>
-                            <span class="status-badge ${s.sent ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">
-                                ${s.sent ? '✅ устранена' : '📈 в процессе'}
-                            </span>
                         </div>
-                        <div class="text-xs text-gray-500 mt-0.5 ml-9.5">
-                            ${s.sent ? 'ошибка больше не повторяется' : 'ошибка исправляется'}
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
 
         function renderStudent(id) {
-            const student = STUDENTS_DATA.find(s => s.id === id);
-            if (!student) return;
+            const student = getStudent(id);
+            if (!student) {
+                showToast('❌', 'Ученик не найден');
+                goToDashboard();
+                return;
+            }
 
             currentStudentId = id;
+            const errors = getStudentErrors(id);
 
             document.getElementById('studentName').textContent = student.name;
-            document.getElementById('studentClass').textContent = student.class;
-            document.getElementById('studentErrorCount').textContent = student.errors.length;
-            document.getElementById('studentErrorDescription').textContent = student.errorDescription;
+            document.getElementById('studentClass').textContent = student.class_name;
+            document.getElementById('studentErrorCount').textContent = errors.length;
+            document.getElementById('studentErrorDescription').textContent = student.error_description || 'Нет описания';
+
+            // Статус
+            const statusEl = document.getElementById('studentStatus');
+            if (student.sent) {
+                statusEl.textContent = '✅ Отправлено';
+                statusEl.className = 'text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700';
+            } else {
+                statusEl.textContent = '⏳ Не отправлено';
+                statusEl.className = 'text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600';
+            }
 
             // Таблица ошибок
             const tbody = document.getElementById('errorTableBody');
-            tbody.innerHTML = student.errors.map(e => `
-                <tr>
-                    <td class="font-medium text-gray-600">${e.date}</td>
-                    <td class="text-gray-700">${e.topic}</td>
-                    <td>
-                        <span class="error-text">${e.text}</span>
-                        ${e.correct ? `<span class="text-gray-400 mx-1.5">→</span> <span class="correct-text">${e.correct}</span>` : ''}
-                    </td>
-                </tr>
-            `).join('');
+            if (errors.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-gray-400 py-4">Нет ошибок</td></tr>`;
+            } else {
+                tbody.innerHTML = errors.map(e => `
+                    <tr>
+                        <td class="font-medium text-gray-600">${e.date || '—'}</td>
+                        <td class="text-gray-700">${e.topic || '—'}</td>
+                        <td class="error-text">${e.error_text || '—'}</td>
+                        <td class="correct-text">${e.correct_text || '—'}</td>
+                    </tr>
+                `).join('');
+            }
 
             // Текст для родителей
-            document.getElementById('factText').innerHTML = student.fact.replace(/\n/g, '<br>');
+            const factEl = document.getElementById('factText');
+            if (student.fact) {
+                factEl.innerHTML = student.fact.replace(/\n/g, '<br>');
+            } else {
+                factEl.innerHTML = `<span class="text-gray-400">Текст не заполнен</span>`;
+            }
 
-            // Переключаем экраны
             document.getElementById('screenDashboard').style.display = 'none';
             document.getElementById('screenStudent').style.display = 'block';
             setTimeout(() => {
                 document.getElementById('screenStudent').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 50);
         }
+
+        // ================================================================
+        // 6. ДЕЙСТВИЯ
+        // ================================================================
 
         function openStudent(id) {
             renderStudent(id);
@@ -993,13 +1480,14 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // ================================================================
-        // ДЕЙСТВИЯ
-        // ================================================================
-
         function copyFact() {
             const factEl = document.getElementById('factText');
             const text = factEl.textContent.trim();
+
+            if (!text || text === 'Текст не заполнен') {
+                showToast('⚠️', 'Текст не заполнен');
+                return;
+            }
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(() => {
@@ -1031,7 +1519,7 @@
 
         function markAsSent() {
             if (!currentStudentId) return;
-            const student = STUDENTS_DATA.find(s => s.id === currentStudentId);
+            const student = getStudent(currentStudentId);
             if (!student) return;
 
             if (student.sent) {
@@ -1039,12 +1527,254 @@
                 return;
             }
 
-            student.sent = true;
+            markAsSentDB(currentStudentId);
             showToast('✅', `Сообщение для ${student.name} отправлено!`);
 
             setTimeout(() => {
                 goToDashboard();
             }, 900);
+        }
+
+        function editFact() {
+            if (!currentStudentId) return;
+            const student = getStudent(currentStudentId);
+            if (!student) return;
+
+            const factEl = document.getElementById('factText');
+            const currentText = student.fact || '';
+
+            if (!editingFact) {
+                const textarea = document.createElement('textarea');
+                textarea.id = 'factEditor';
+                textarea.className =
+                    'form-input w-full min-h-[200px] rounded-xl p-4 font-sans text-sm leading-relaxed';
+                textarea.value = currentText;
+                textarea.style.fontFamily = 'Inter, sans-serif';
+
+                factEl.innerHTML = '';
+                factEl.appendChild(textarea);
+
+                editingFact = true;
+
+                const btns = document.querySelector('#screenStudent .btn-outline');
+                if (btns && btns.textContent.includes('Редактировать')) {
+                    btns.innerHTML = '<i class="fas fa-save"></i> Сохранить';
+                    btns.className = 'btn-primary';
+                    btns.onclick = saveFactEdit;
+                }
+            }
+        }
+
+        function saveFactEdit() {
+            if (!currentStudentId) return;
+            const editor = document.getElementById('factEditor');
+            if (!editor) return;
+
+            const newFact = editor.value.trim();
+            updateStudent(currentStudentId, { fact: newFact });
+
+            editingFact = false;
+            showToast('✅', 'Текст сохранён!');
+
+            const btns = document.querySelector('#screenStudent .btn-outline');
+            if (btns && btns.textContent.includes('Сохранить')) {
+                btns.innerHTML = '<i class="fas fa-pen"></i> Редактировать';
+                btns.className = 'btn-outline';
+                btns.onclick = editFact;
+            }
+
+            renderStudent(currentStudentId);
+        }
+
+        function deleteStudent() {
+            if (!currentStudentId) return;
+            const student = getStudent(currentStudentId);
+            if (!student) return;
+
+            if (confirm(`Удалить ученика ${student.name}?`)) {
+                deleteStudentDB(currentStudentId);
+                showToast('🗑️', `Ученик ${student.name} удалён`);
+                goToDashboard();
+            }
+        }
+
+        // ================================================================
+        // 7. МОДАЛЬНОЕ ОКНО
+        // ================================================================
+
+        function openModal() {
+            document.getElementById('modalAddStudent').classList.add('active');
+            document.getElementById('formName').focus();
+            // Добавляем одну пустую строку ошибки для удобства
+            if (document.querySelectorAll('.error-row').length === 0) {
+                addErrorRow();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modalAddStudent').classList.remove('active');
+            document.getElementById('addStudentForm').reset();
+            document.getElementById('errorsContainer').innerHTML = '';
+            errorRows = [];
+            updateErrorCount();
+            editingFact = false;
+        }
+
+        function handleAddStudent(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('formName').value.trim();
+            const className = document.getElementById('formClass').value.trim();
+            const errorDesc = document.getElementById('formErrorDesc').value.trim();
+            const fact = document.getElementById('formFact').value.trim();
+            const errors = getErrorsFromForm();
+
+            if (!name || !className) {
+                showToast('⚠️', 'Заполните имя и класс');
+                return;
+            }
+
+            const id = createStudent(name, className, errorDesc, errors, fact);
+            if (id) {
+                showToast('✅', `Ученик ${name} добавлен!`);
+                closeModal();
+                renderDashboard();
+            } else {
+                showToast('❌', 'Ошибка при сохранении');
+            }
+        }
+
+        document.getElementById('modalAddStudent').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // ================================================================
+        // 8. ИМПОРТ/ЭКСПОРТ
+        // ================================================================
+
+        function importCSV() {
+            document.getElementById('csvInput').click();
+        }
+
+        function handleImportFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    const lines = text.split('\n').filter(line => line.trim());
+
+                    if (lines.length < 2) {
+                        showToast('⚠️', 'Файл пуст');
+                        return;
+                    }
+
+                    try {
+                        const data = JSON.parse(text);
+                        if (Array.isArray(data)) {
+                            let count = 0;
+                            for (const item of data) {
+                                createStudent(
+                                    item.name || 'Unknown',
+                                    item.class_name || item.class || '—',
+                                    item.error_description || '',
+                                    item.errors || [],
+                                    item.fact || ''
+                                );
+                                count++;
+                            }
+                            showToast('✅', `Импортировано ${count} учеников из JSON`);
+                            renderDashboard();
+                            return;
+                        }
+                    } catch (jsonError) {}
+
+                    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+                    let count = 0;
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                        const data = {};
+                        headers.forEach((h, idx) => {
+                            data[h] = values[idx] || '';
+                        });
+
+                        if (data.name) {
+                            let errors = [];
+                            if (data.errors) {
+                                try {
+                                    errors = JSON.parse(data.errors);
+                                } catch (e) {}
+                            }
+                            createStudent(
+                                data.name,
+                                data.class_name || data.class || '—',
+                                data.error_description || '',
+                                errors,
+                                data.fact || ''
+                            );
+                            count++;
+                        }
+                    }
+
+                    showToast('✅', `Импортировано ${count} учеников из CSV`);
+                    renderDashboard();
+
+                } catch (err) {
+                    showToast('❌', 'Ошибка импорта: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function exportDatabase() {
+            if (!db) return;
+            try {
+                const data = db.export();
+                const buffer = new Uint8Array(data);
+                const blob = new Blob([buffer], { type: 'application/x-sqlite3' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `students_backup_${new Date().toISOString().slice(0,10)}.db`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+                showToast('✅', 'Бэкап скачан!');
+            } catch (e) {
+                showToast('❌', 'Ошибка экспорта');
+            }
+        }
+
+        // ================================================================
+        // 9. ХЕЛПЕРЫ
+        // ================================================================
+
+        function declension(n, forms) {
+            n = Math.abs(n) % 100;
+            const n1 = n % 10;
+            if (n > 10 && n < 20) return forms[2];
+            if (n1 > 1 && n1 < 5) return forms[1];
+            if (n1 === 1) return forms[0];
+            return forms[2];
+        }
+
+        function updateDate() {
+            const now = new Date();
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            document.getElementById('currentDate').textContent =
+                now.toLocaleDateString('ru-RU', options)
+                .replace(/^(\w)/, c => c.toUpperCase());
+
+            const start = new Date(now.getFullYear(), 0, 1);
+            const diff = (now - start + (start.getTimezoneOffset() - now.getTimezoneOffset()) * 60000) / 86400000;
+            const week = Math.ceil((diff + start.getDay() + 1) / 7);
+            document.getElementById('currentWeek').textContent = week;
         }
 
         function showToast(icon, message) {
@@ -1059,30 +1789,31 @@
         }
 
         // ================================================================
-        // ХЕЛПЕРЫ
+        // 10. ЗАПУСК
         // ================================================================
 
-        function declension(n, forms) {
-            n = Math.abs(n) % 100;
-            const n1 = n % 10;
-            if (n > 10 && n < 20) return forms[2];
-            if (n1 > 1 && n1 < 5) return forms[1];
-            if (n1 === 1) return forms[0];
-            return forms[2];
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            initDatabase();
 
-        // ================================================================
-        // ИНИЦИАЛИЗАЦИЯ
-        // ================================================================
+            document.getElementById('addStudentForm').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    this.dispatchEvent(new Event('submit'));
+                }
+            });
 
-        renderDashboard();
-        document.getElementById('screenStudent').style.display = 'none';
-        document.getElementById('screenDashboard').style.display = 'block';
+            // Добавляем первую пустую ошибку при открытии модалки
+            document.getElementById('modalAddStudent').addEventListener('transitionend', function(e) {
+                if (this.classList.contains('active') && document.querySelectorAll('.error-row').length === 0) {
+                    addErrorRow();
+                }
+            });
+        });
 
-        console.log('🏗️ Архитектор ошибочных траекторий v1.0');
-        console.log(`📊 Всего учеников: ${STUDENTS_DATA.length}`);
-        console.log(`🚨 Требуют внимания: ${getActiveStudents().length}`);
-        console.log(`📈 В прогрессе: ${getProgressStudents().length}`);
+        console.log('🏗️ Архитектор ошибочных траекторий v2.0');
+        console.log('📦 SQLite в браузере через sql.js');
+        console.log('💾 Данные хранятся в localStorage');
+        console.log('📥 Импорт CSV/JSON поддерживается');
     </script>
 
 </body>
