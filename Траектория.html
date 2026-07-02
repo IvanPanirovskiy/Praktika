@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Траектории v3.2 — Premium Workspace</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #18181b 0%, #27272a 40%, #2e1065 100%);
+            color: #09090b;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .sidebar {
+            background: linear-gradient(180deg, #18181b 0%, #09090b 100%);
+        }
+        .nav-link {
+            color: #a1a1aa;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff;
+            background-color: #27272a;
+        }
+        .nav-link.active {
+            border-left: 4px solid #8b5cf6;
+            box-shadow: inset 4px 0 15px -5px rgba(139, 92, 246, 0.3);
+        }
+        .glass-panel {
+            background: linear-gradient(135deg, #ffffff 0%, #fbfbfb 100%);
+            border: 1px solid #e4e4e7;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
+        }
+        .threat-high { background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-left: 4px solid #ef4444; }
+        .threat-medium { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 4px solid #f59e0b; }
+        .threat-low { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border-left: 4px solid #8b5cf6; }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(9, 9, 11, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        
+        .toast {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            background: #09090b; color: white;
+            padding: 14px 24px; border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            transform: translateY(100px); opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        
+        /* Добавили класс для кликабельных карточек метрик */
+        .metric-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .metric-card:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body class="overflow-hidden h-screen flex text-[15px]">
+
+    <div class="toast flex items-center gap-3" id="toast">
+        <span id="toastIcon" class="text-base">🔹</span>
+        <span id="toastMessage" class="text-sm font-semibold tracking-wide">Система готова</span>
+    </div>
+
+    <aside class="sidebar w-64 h-full flex flex-col justify-between p-4 shrink-0 text-white z-20 shadow-xl border-r border-zinc-800">
+        <div>
+            <div class="flex items-center gap-3 px-2 py-4 border-b border-zinc-800 mb-6">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-violet-500/20">
+                    <i class="fas fa-crown text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-sm tracking-wider text-white">ТРАЕКТОРИЯ</h1>
+                    
+                </div>
+            </div>
+
+            <nav class="space-y-1.5">
+                <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-link active w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold">
+                    <i class="fas fa-chart-line w-5 text-center text-base"></i> Аналитика
+                </button>
+                <button onclick="switchView('students')" id="nav-students" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold">
+                    <i class="fas fa-user-graduate w-5 text-center text-base"></i> Реестр учащихся
+                </button>
+                <button onclick="switchView('errors')" id="nav-errors" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold">
+                    <i class="fas fa-shield-virus w-5 text-center text-base"></i> Лог ошибок
+                </button>
+            </nav>
+        </div>
+
+        <div class="border-t border-zinc-800 pt-4 px-2 text-xs text-zinc-500 space-y-1.5">
+            <div class="flex items-center justify-between">
+                <span>Статус ядра:</span>
+                <span class="text-violet-400 font-bold flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span> Online
+                </span>
+            </div>
+            <div class="text-[11px] mono text-zinc-600">SQLite Core via WASM</div>
+        </div>
+    </aside>
+
+    <main class="flex-1 h-full flex flex-col min-w-0 bg-zinc-100/90 backdrop-blur-sm">
+        
+        <header class="h-16 border-b border-zinc-200 bg-white px-6 flex items-center justify-between shrink-0 shadow-sm z-10">
+            <div class="flex items-center gap-4">
+                <h2 id="viewTitle" class="text-base font-extrabold text-zinc-900">Аналитика</h2>
+                <div class="h-4 w-px bg-zinc-200"></div>
+                <p id="systemDate" class="text-xs font-bold text-zinc-400 uppercase tracking-widest font-mono"></p>
+            </div>
+            
+            <div class="flex items-center gap-2.5">
+                <button onclick="openAddModal()" class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition-all flex items-center gap-2 shadow-md shadow-violet-600/10 active:scale-95">
+                    <i class="fas fa-plus text-xs"></i> Новый ученик
+                </button>
+                <button onclick="triggerImport()" class="border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold px-4 py-2.5 rounded-lg transition-all active:scale-95">
+                    Импорт JSON
+                </button>
+                <button onclick="exportDatabaseFile()" class="border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold px-4 py-2.5 rounded-lg transition-all active:scale-95">
+                    Экспорт .DB
+                </button>
+                <input type="file" id="hiddenImportInput" accept=".json" class="hidden" onchange="handleFileImport(event)" />
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6 min-w-0">
+
+            <div id="view-dashboard" class="space-y-6">
+                
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div onclick="navigateQuickFilter('students', 'ALL')" class="glass-panel metric-card rounded-xl p-5 flex flex-col justify-between hover:border-zinc-400">
+                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Всего в реестре</span>
+                        <h3 class="text-3xl font-black text-zinc-900 tracking-tight mt-2 mono leading-none" id="statTotalStudents">0</h3>
+                    </div>
+                    <div onclick="navigateQuickFilter('errors', 'HIGH')" class="glass-panel metric-card rounded-xl p-5 flex flex-col justify-between border-l-4 border-l-rose-500 hover:border-rose-400">
+                        <span class="text-xs font-bold uppercase tracking-wider text-rose-500">Критические угрозы</span>
+                        <h3 class="text-3xl font-black text-rose-600 tracking-tight mt-2 mono leading-none" id="statHighThreats">0</h3>
+                    </div>
+                    <div onclick="navigateQuickFilter('students', 'MULTIPLE')" class="glass-panel metric-card rounded-xl p-5 flex flex-col justify-between border-l-4 border-l-amber-500 hover:border-amber-400">
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-500">Требуют внимания</span>
+                        <h3 class="text-3xl font-black text-amber-600 tracking-tight mt-2 mono leading-none" id="statAttentionNeeded">0</h3>
+                    </div>
+                    <div class="glass-panel rounded-xl p-5 flex flex-col justify-between border-l-4 border-l-violet-500">
+                        <span class="text-xs font-bold uppercase tracking-wider text-violet-500">Архивировано отчетов</span>
+                        <h3 class="text-3xl font-black text-violet-600 tracking-tight mt-2 mono leading-none" id="statSentManifests">0</h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="glass-panel rounded-xl p-5 lg:col-span-1 flex flex-col">
+                        <h4 class="text-xs font-extrabold text-zinc-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <i class="fas fa-brain text-violet-500 text-sm"></i> Частотные уязвимости
+                        </h4>
+                        <div id="analyticsTopicContainer" class="space-y-4 flex-1 flex flex-col justify-start">
+                            <p class="text-sm text-zinc-400 text-center py-6">Нет данных</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-xl p-5 lg:col-span-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                            <h4 class="text-xs font-extrabold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fas fa-fire text-rose-500 text-sm"></i> Экстренный триаж (Высокий приоритет)
+                            </h4>
+                            <select id="triagePerformanceFilter" onchange="renderDashboardView()" class="bg-white border border-zinc-200 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:border-violet-500 cursor-pointer text-zinc-600">
+                                <option value="ALL">Все группы риска</option>
+                                <option value="MULTIPLE">Множественные сбои (≥ 2 ошибок)</option>
+                                <option value="SINGLE">Единичные инциденты (1 ошибка)</option>
+                            </select>
+                        </div>
+                        <div id="dashboardAlertsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[340px] overflow-y-auto pr-1">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-students" class="space-y-4 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-zinc-200 shadow-sm">
+                    <div class="relative flex-1 max-w-sm">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-sm"></i>
+                        <input type="text" id="studentSearchInput" oninput="searchStudents()" class="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" placeholder="Поиск по ФИО или классу..." />
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <select id="registryPerformanceFilter" onchange="searchStudents()" class="bg-white border border-zinc-200 rounded-lg text-xs font-bold p-2.5 focus:outline-none focus:border-violet-500 cursor-pointer text-zinc-600">
+                            <option value="ALL">Все учащиеся</option>
+                            <option value="MULTIPLE">Множественные девиации (≥ 2 ошибок)</option>
+                            <option value="STABLE">Стабильная траектория (≤ 1 ошибки)</option>
+                        </select>
+                        <div class="text-sm font-semibold text-zinc-500 shrink-0">Найдено записей: <span id="searchStudentsCount" class="font-extrabold text-zinc-900">0</span></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="studentsGridContainer">
+                    </div>
+            </div>
+
+            <div id="view-errors" class="space-y-4 hidden">
+                <div class="glass-panel rounded-xl p-3 flex items-center justify-between gap-4">
+                    <select id="filterSeverity" onchange="filterGlobalErrors()" class="bg-white border border-zinc-200 rounded-lg text-sm font-semibold p-2.5 focus:outline-none focus:border-violet-500 cursor-pointer">
+                        <option value="ALL">Все уровни инцидентов</option>
+                        <option value="HIGH">🔴 Высокий критический</option>
+                        <option value="MEDIUM">🟡 Средний уровень</option>
+                        <option value="LOW">🟣 Информационный</option>
+                    </select>
+                    <div class="text-sm text-zinc-500 font-medium">Всего зафиксировано девиаций: <span id="globalErrorsCount" class="font-extrabold text-zinc-900">0</span></div>
+                </div>
+
+                <div class="glass-panel rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-zinc-50/80 border-b border-zinc-200 text-zinc-500 font-bold uppercase tracking-wider">
+                                <th class="p-3.5 pl-4">Ученик</th>
+                                <th class="p-3.5">Дата</th>
+                                <th class="p-3.5">Модуль / Тема</th>
+                                <th class="p-3.5">Аномалия</th>
+                                <th class="p-3.5">Эталон</th>
+                                <th class="p-3.5 pr-4">Критичность</th>
+                            </tr>
+                        </thead>
+                        <tbody id="globalErrorsTableBody" class="divide-y divide-zinc-200 bg-white">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="view-studentProfile" class="space-y-4 hidden">
+                <button onclick="switchView('students')" class="inline-flex items-center gap-2 text-sm font-bold text-zinc-500 hover:text-zinc-900 transition-all bg-white px-3 py-1.5 rounded-lg border border-zinc-200">
+                    <i class="fas fa-arrow-left text-xs"></i> Вернуться к реестру
+                </button>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                    <div class="lg:col-span-8 space-y-4">
+                        <div class="glass-panel rounded-xl p-5 relative">
+                            <div class="flex items-center gap-3">
+                                <span id="profileClassBadge" class="bg-zinc-900 text-white font-mono font-bold text-xs px-2.5 py-1 rounded-md">—</span>
+                                <span id="profileStatusBadge" class="text-xs font-bold px-2.5 py-1 rounded-full">Статус</span>
+                            </div>
+                            <h3 id="profileStudentName" class="text-2xl font-black text-zinc-900 tracking-tight mt-2">—</h3>
+                            <p id="profileErrorDescription" class="text-sm text-zinc-600 mt-3 leading-relaxed bg-zinc-50 p-3.5 rounded-lg border border-zinc-200 font-medium"></p>
+                        </div>
+
+                        <div class="glass-panel rounded-xl p-5">
+                            <h4 class="text-xs font-extrabold text-zinc-400 uppercase tracking-wider mb-3">Хронология фиксации аномалий</h4>
+                            <div class="overflow-x-auto rounded-lg border border-zinc-200">
+                                <table class="w-full text-left border-collapse text-sm">
+                                    <thead class="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-bold">
+                                        <tr>
+                                            <th class="p-3 text-center w-12">Статус</th>
+                                            <th class="p-3 w-20">Дата</th>
+                                            <th class="p-3 w-1/4">Раздел</th>
+                                            <th class="p-3 text-rose-600">Ошибка ученика</th>
+                                            <th class="p-3 text-violet-600">Норматив</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="profileErrorsTableBody" class="divide-y divide-zinc-200 bg-white">
+                                        </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-4 space-y-4">
+                        <div class="glass-panel rounded-xl p-5 border-t-4 border-t-zinc-900 shadow-md">
+                            <h4 class="text-xs font-extrabold text-zinc-400 uppercase tracking-wider mb-3">Аналитический манифест для родителей</h4>
+                            <div id="profileFactBox" class="p-4 bg-zinc-50 rounded-lg border border-zinc-200 text-sm text-zinc-800 leading-relaxed min-h-[140px] font-medium">
+                                </div>
+
+                            <div class="grid grid-cols-2 gap-2.5 mt-4">
+                                <button onclick="copyManifestText()" class="bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs py-3 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95">
+                                    <i class="fas fa-copy text-xs"></i> Копировать
+                                </button>
+                                <button onclick="markManifestAsSent()" class="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs py-3 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-violet-600/10">
+                                    <i class="fas fa-check-circle text-xs"></i> Отправлен
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2.5 mt-2">
+                                <button onclick="editManifestText()" class="border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 font-bold text-xs py-3 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95">
+                                    <i class="fas fa-pen text-xs"></i> Редактировать
+                                </button>
+                                <button onclick="deleteCurrentStudent()" class="border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs py-3 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95">
+                                    <i class="fas fa-trash-alt text-xs"></i> Ликвидировать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="addStudentModal">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto m-4 border border-zinc-200">
+            <div class="flex items-center justify-between pb-4 border-b border-zinc-100 mb-4">
+                <h3 class="font-black text-zinc-900 text-base flex items-center gap-2"><i class="fas fa-user-plus text-violet-600"></i> Создание учебной траектории</h3>
+                <button onclick="closeAddModal()" class="text-zinc-400 hover:text-zinc-600 text-lg p-1"><i class="fas fa-times"></i></button>
+            </div>
+
+            <form id="addStudentForm" onsubmit="submitStudentForm(event)" class="space-y-4">
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">ФИО Ученика *</label>
+                        <input type="text" id="modalName" required class="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" placeholder="Смирнов Антон" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">Класс *</label>
+                        <input type="text" id="modalClass" required class="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 font-mono font-bold" placeholder="9А" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">Суть девиации траектории</label>
+                    <input type="text" id="modalDesc" class="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" placeholder="Системные затруднения в..." />
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-bold text-zinc-400 uppercase">Таблица зафиксированных сбоев</label>
+                        <span id="modalErrorCountLabel" class="text-xs font-mono text-violet-600 font-bold bg-violet-50 px-2 py-0.5 rounded">0 багов</span>
+                    </div>
+                    <div id="modalErrorsListContainer" class="space-y-2.5">
+                        </div>
+                    <button type="button" onclick="addNewErrorRowToForm()" class="w-full mt-2.5 py-3 border-2 border-dashed border-zinc-200 rounded-lg text-sm font-bold text-zinc-500 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/30 transition-all">
+                        <i class="fas fa-plus-circle mr-1"></i> Добавить строку инцидента
+                    </button>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">Текст аналитического резюме</label>
+                    <textarea id="modalFact" rows="3" class="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 leading-relaxed" placeholder="Уважаемые родители..."></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-bold py-3 rounded-lg transition-all active:scale-95 shadow-lg shadow-zinc-900/10">Записать в СУБД</button>
+                    <button type="button" onclick="closeAddModal()" class="flex-1 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-600 text-sm font-bold py-3 rounded-lg transition-all active:scale-95">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let db = null;
+        let currentOpenStudentId = null;
+        let isEditingManifest = false;
+
+        function switchView(viewId) {
+            const views = ['dashboard', 'students', 'errors', 'studentProfile'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${v}`);
+                if (navBtn) navBtn.classList.remove('active');
+            });
+
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${viewId}`);
+            if (activeNav) activeNav.classList.add('active');
+
+            const titleMap = {
+                dashboard: 'Аналитический Мониторинг',
+                students: 'Реестр траекторий учащихся',
+                errors: 'Глобальный лог девиаций',
+                studentProfile: 'Рабочая панель мониторинга'
+            };
+            document.getElementById('viewTitle').textContent = titleMap[viewId] || 'Система';
+
+            if (viewId === 'dashboard') renderDashboardView();
+            if (viewId === 'students') renderStudentsView();
+            if (viewId === 'errors') renderGlobalErrorsView();
+        }
+
+        // Новая функция-помощник для кликабельных плашек
+        function navigateQuickFilter(targetView, filterValue) {
+            switchView(targetView);
+            if (targetView === 'students') {
+                document.getElementById('registryPerformanceFilter').value = filterValue;
+                searchStudents();
+            } else if (targetView === 'errors') {
+                document.getElementById('filterSeverity').value = filterValue;
+                filterGlobalErrors();
+            }
+        }
+
+        async function initEngine() {
+            try {
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+
+                const savedDb = localStorage.getItem('trajectories_v3_db');
+                if (savedDb) {
+                    try {
+                        const binary = atob(savedDb.split(',')[1]);
+                        const bytes = new Uint8Array(binary.length);
+                        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                        db = new SQL.Database(bytes);
+                    } catch (e) { db = new SQL.Database(); }
+                } else {
+                    db = new SQL.Database();
+                }
+
+                db.run(`
+                    CREATE TABLE IF NOT EXISTS students (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT NOT NULL UNIQUE,
+                        class_name TEXT NOT NULL,
+                        error_description TEXT,
+                        fact TEXT,
+                        sent INTEGER DEFAULT 0
+                    )
+                `);
+
+                db.run(`
+                    CREATE TABLE IF NOT EXISTS errors (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        student_id INTEGER NOT NULL,
+                        date TEXT,
+                        topic TEXT,
+                        error_text TEXT,
+                        correct_text TEXT,
+                        severity TEXT DEFAULT 'MEDIUM',
+                        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+                    )
+                `);
+
+                const check = db.exec('SELECT COUNT(*) FROM students');
+                if (!check[0]?.values[0][0]) seedSystemData();
+
+                syncStorage();
+                updateClock();
+                switchView('dashboard');
+            } catch (err) { console.error("Критический сбой ядра СУБД", err); }
+        }
+
+        function syncStorage() {
+            if (!db) return;
+            try {
+                const data = db.export();
+                const buffer = new Uint8Array(data);
+                const blob = new Blob([buffer]);
+                const reader = new FileReader();
+                reader.onload = () => localStorage.setItem('trajectories_v3_db', reader.result);
+                reader.readAsDataURL(blob);
+            } catch(e){}
+        }
+
+        function seedSystemData() {
+            try {
+                db.run(`INSERT OR IGNORE INTO students (name, class_name, error_description, fact) VALUES ('Волков Максим', '8А', 'Регулярная потеря знака при переносе через равенство', 'Уважаемые родители Максима! Зафиксирован системный баг с потерей знаков при переносе слагаемых.')`);
+                db.run(`INSERT OR IGNORE INTO errors (student_id, date, topic, error_text, correct_text, severity) VALUES (1, '02.10', 'Линейные уравнения', '2x + 5 = 11 -> 2x = 11 + 5', '2x = 11 - 5', 'HIGH')`);
+                db.run(`INSERT OR IGNORE INTO errors (student_id, date, topic, error_text, correct_text, severity) VALUES (1, '05.10', 'Линейные уравнения', '3x - 4 = 2 -> 3x = 2 - 4', '3x = 2 + 4', 'MEDIUM')`);
+
+                db.run(`INSERT OR IGNORE INTO students (name, class_name, error_description, fact) VALUES ('Ковалева Анна', '9Б', 'Ошибки в формулах сокращенного умножения', 'Уважаемые родители Анны! Обратите внимание на раскрытие квадрата разности.')`);
+                db.run(`INSERT OR IGNORE INTO errors (student_id, date, topic, error_text, correct_text, severity) VALUES (2, '28.09', 'ФСУ', '(a-b)² = a² - b²', '(a-b)² = a² - 2ab + b²', 'HIGH')`);
+                
+                db.run(`INSERT OR IGNORE INTO students (name, class_name, error_description, fact) VALUES ('Лебедев Илья', '7В', 'Неверный порядок действий во фракциях', 'У Ильи косметические помарки со сложением дробей.')`);
+                db.run(`INSERT OR IGNORE INTO errors (student_id, date, topic, error_text, correct_text, severity) VALUES (3, '11.10', 'Дроби', '1/2 + 1/3 = 2/5', '5/6', 'LOW')`);
+                syncStorage();
+            } catch(e){}
+        }
+
+        function renderDashboardView() {
+            const totalStudents = db.exec('SELECT COUNT(*) FROM students')[0]?.values[0][0] || 0;
+            const highThreats = db.exec("SELECT COUNT(DISTINCT student_id) FROM errors WHERE severity='HIGH' AND student_id IN (SELECT id FROM students WHERE sent=0)")[0]?.values[0][0] || 0;
+            const sentCount = db.exec('SELECT COUNT(*) FROM students WHERE sent=1')[0]?.values[0][0] || 0;
+            
+            const attentionCount = db.exec(`
+                SELECT COUNT(*) FROM (
+                    SELECT student_id FROM errors WHERE student_id IN (SELECT id FROM students WHERE sent=0) GROUP BY student_id HAVING COUNT(id) >= 2
+                )
+            `)[0]?.values[0][0] || 0;
+
+            document.getElementById('statTotalStudents').textContent = totalStudents;
+            document.getElementById('statHighThreats').textContent = highThreats;
+            document.getElementById('statAttentionNeeded').textContent = attentionCount;
+            document.getElementById('statSentManifests').textContent = sentCount;
+
+            const topicContainer = document.getElementById('analyticsTopicContainer');
+            try {
+                const topicResult = db.exec(`SELECT topic, COUNT(id) as count FROM errors GROUP BY topic ORDER BY count DESC LIMIT 3`);
+                if (topicResult.length > 0 && topicResult[0].values.length > 0) {
+                    const rows = topicResult[0].values;
+                    const maxCount = rows[0][1] || 1;
+                    topicContainer.innerHTML = rows.map(r => {
+                        const percent = Math.min(100, Math.round((r[1] / maxCount) * 100));
+                        return `
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1">
+                                    <span class="text-zinc-700 truncate max-w-[140px]">${r[0] || 'Не указано'}</span>
+                                    <span class="text-violet-600 mono">${r[1]} инц.</span>
+                                </div>
+                                <div class="w-full bg-zinc-200 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-gradient-to-r from-violet-500 to-indigo-500 h-full rounded-full" style="width: ${percent}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    topicContainer.innerHTML = `<p class="text-sm text-zinc-400 text-center py-4">Лог инцидентов пуст</p>`;
+                }
+            } catch(e) { topicContainer.innerHTML = ''; }
+
+            const alertContainer = document.getElementById('dashboardAlertsContainer');
+            const triageFilter = document.getElementById('triagePerformanceFilter').value;
+            try {
+                // ИСПРАВЛЕНИЕ: Добавлен GROUP BY s.id, чтобы один ученик ВСЕГДА выводился одной карточкой, 
+                // даже если у него 10 ошибок HIGH. Функция MAX(e.topic) просто берет текст последней ошибки для предпросмотра.
+                let query = `
+                    SELECT s.id, s.name, s.class_name, MAX(e.topic) as topic, MAX(e.error_text) as error_text,
+                    (SELECT COUNT(*) FROM errors WHERE student_id = s.id) as total_student_errors
+                    FROM students s 
+                    JOIN errors e ON s.id = e.student_id 
+                    WHERE e.severity = 'HIGH' AND s.sent = 0
+                `;
+                
+                if (triageFilter === 'MULTIPLE') {
+                    query += ` AND (SELECT COUNT(*) FROM errors WHERE student_id = s.id) >= 2`;
+                } else if (triageFilter === 'SINGLE') {
+                    query += ` AND (SELECT COUNT(*) FROM errors WHERE student_id = s.id) = 1`;
+                }
+
+                query += ` GROUP BY s.id ORDER BY MAX(e.id) DESC`;
+
+                const alertsRes = db.exec(query);
+                if (alertsRes.length > 0 && alertsRes[0].values.length > 0) {
+                    alertContainer.innerHTML = alertsRes[0].values.map(r => `
+                        <div onclick="openStudentWorkspace(${r[0]})" class="threat-high rounded-xl p-4 flex flex-col text-sm cursor-pointer hover:shadow-md transition-all justify-between border border-rose-200 active:scale-[0.99]">
+                            <div class="flex justify-between items-center font-bold">
+                                <span class="text-rose-950 font-extrabold truncate max-w-[150px]">${r[1]} (${r[2]})</span>
+                                <span class="bg-rose-200 text-rose-800 px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider">CRIT (ошибок: ${r[5]})</span>
+                            </div>
+                            <div class="text-xs text-zinc-600 mt-2 line-clamp-1"><span class="font-bold text-zinc-700">${r[3]}:</span> <span class="text-rose-600 font-mono font-semibold">${r[4]}</span></div>
+                        </div>
+                    `).join('');
+                } else {
+                    alertContainer.innerHTML = `<p class="text-sm text-zinc-400 text-center py-6 col-span-2">Сбоев выбранного уровня успеваемости не обнаружено</p>`;
+                }
+            } catch(e) { alertContainer.innerHTML = ''; }
+        }
+
+        function renderStudentsView(filterText = '') {
+            const grid = document.getElementById('studentsGridContainer');
+            grid.innerHTML = '';
+            const perfFilter = document.getElementById('registryPerformanceFilter').value;
+            
+            try {
+                const res = db.exec(`
+                    SELECT s.id, s.name, s.class_name, s.error_description, s.sent,
+                    (SELECT COUNT(*) FROM errors WHERE student_id = s.id) as total_errs,
+                    (SELECT COUNT(*) FROM errors WHERE student_id = s.id AND severity='HIGH') as high_errs
+                    FROM students s ORDER BY s.name ASC
+                `);
+
+                if (res.length === 0 || res[0].values.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-8 text-zinc-400 text-sm">База данных пуста</div>`;
+                    document.getElementById('searchStudentsCount').textContent = 0;
+                    return;
+                }
+
+                let matches = 0;
+                res[0].values.forEach(row => {
+                    const [id, name, className, desc, sent, totalErrs, highErrs] = row;
+                    
+                    if (filterText && !name.toLowerCase().includes(filterText.toLowerCase()) && !className.toLowerCase().includes(filterText.toLowerCase())) return;
+                    
+                    if (perfFilter === 'MULTIPLE' && totalErrs < 2) return;
+                    if (perfFilter === 'STABLE' && totalErrs >= 2) return;
+
+                    matches++;
+
+                    let threatBorder = 'border-zinc-200';
+                    let threatBadge = '';
+                    if (sent == 1) {
+                        threatBorder = 'border-violet-200 bg-violet-50/20';
+                        threatBadge = `<span class="bg-violet-100 text-violet-700 text-[10px] font-bold px-2 py-0.5 rounded-md">Архив</span>`;
+                    } else if (highErrs > 0) {
+                        threatBorder = 'border-rose-300 bg-rose-50/10 shadow-sm';
+                        threatBadge = `<span class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-md">High</span>`;
+                    } else if (totalErrs >= 2) {
+                        threatBorder = 'border-amber-300 bg-amber-50/10';
+                        threatBadge = `<span class="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-md">Внимание</span>`;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = `glass-panel rounded-xl p-5 cursor-pointer hover:border-zinc-400 hover:shadow-md transition-all flex flex-col justify-between min-h-[160px] active:scale-[0.98] ${threatBorder}`;
+                    card.setAttribute('onclick', `openStudentWorkspace(${id})`);
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-xs font-mono font-bold text-zinc-400">${className}</span>
+                                ${threatBadge}
+                            </div>
+                            <h4 class="font-extrabold text-zinc-900 text-base truncate tracking-tight">${name}</h4>
+                            <p class="text-xs text-zinc-500 mt-2 line-clamp-2 leading-relaxed">${desc || 'Нет спецификации.'}</p>
+                        </div>
+                        <div class="flex justify-between items-center pt-3 border-t border-zinc-100 text-xs text-zinc-500 font-semibold mt-3">
+                            <span>Инцидентов: <strong class="text-zinc-900 font-mono text-sm">${totalErrs}</strong></span>
+                            <span class="text-violet-600 font-bold">Управление <i class="fas fa-chevron-right text-[10px] ml-0.5"></i></span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+                document.getElementById('searchStudentsCount').textContent = matches;
+            } catch (err) { grid.innerHTML = ''; }
+        }
+
+        function searchStudents() { renderStudentsView(document.getElementById('studentSearchInput').value); }
+
+        function renderGlobalErrorsView() {
+            const tbody = document.getElementById('globalErrorsTableBody');
+            const severityFilter = document.getElementById('filterSeverity').value;
+            tbody.innerHTML = '';
+
+            let query = `SELECT e.id, s.name, s.class_name, e.date, e.topic, e.error_text, e.correct_text, e.severity, s.id as sid FROM errors e JOIN students s ON e.student_id = s.id`;
+            if (severityFilter !== 'ALL') query += ` WHERE e.severity = '${severityFilter}'`;
+            query += ` ORDER BY e.id DESC`;
+
+            try {
+                const res = db.exec(query);
+                if (res.length === 0 || res[0].values.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-zinc-400">Лог девиаций пуст</td></tr>`;
+                    document.getElementById('globalErrorsCount').textContent = 0;
+                    return;
+                }
+
+                const rows = res[0].values;
+                document.getElementById('globalErrorsCount').textContent = rows.length;
+
+                tbody.innerHTML = rows.map(r => {
+                    let sevBadge = '';
+                    if (r[7] === 'HIGH') sevBadge = '<span class="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded">🔴 High</span>';
+                    else if (r[7] === 'MEDIUM') sevBadge = '<span class="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded">🟡 Med</span>';
+                    else sevBadge = '<span class="text-violet-600 font-bold bg-violet-50 px-2 py-0.5 rounded">🟣 Low</span>';
+
+                    return `
+                        <tr class="hover:bg-zinc-50/80 cursor-pointer transition-all border-b border-zinc-100" onclick="openStudentWorkspace(${r[8]})">
+                            <td class="p-3.5 pl-4 font-bold text-zinc-800">${r[1]} <span class="text-zinc-400 font-normal font-mono text-xs">(${r[2]})</span></td>
+                            <td class="p-3.5 text-zinc-400 font-mono">${r[3]||'—'}</td>
+                            <td class="p-3.5 font-semibold text-zinc-600 truncate max-w-[160px]">${r[4]||'—'}</td>
+                            <td class="p-3.5 text-rose-600 font-mono font-bold">${r[5]||'—'}</td>
+                            <td class="p-3.5 text-violet-600 font-mono font-bold">${r[6]||'—'}</td>
+                            <td class="p-3.5 pr-4">${sevBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (e) { tbody.innerHTML = ''; }
+        }
+
+        function filterGlobalErrors() { renderGlobalErrorsView(); }
+
+        function openStudentWorkspace(studentId) {
+            currentOpenStudentId = studentId;
+            isEditingManifest = false;
+            
+            try {
+                const studentRes = db.exec(`SELECT name, class_name, error_description, fact, sent FROM students WHERE id = ${studentId}`);
+                if (studentRes.length === 0) return;
+                const [name, className, errDesc, fact, sent] = studentRes[0].values[0];
+
+                document.getElementById('profileStudentName').textContent = name;
+                document.getElementById('profileClassBadge').textContent = className;
+                document.getElementById('profileErrorDescription').textContent = errDesc || 'Спецификация траектории отсутствует.';
+
+                const statusBadge = document.getElementById('profileStatusBadge');
+                if (sent == 1) {
+                    statusBadge.textContent = 'Архивный статус';
+                    statusBadge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-zinc-200 text-zinc-700';
+                } else {
+                    statusBadge.textContent = 'Активный мониторинг';
+                    statusBadge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-violet-100 text-violet-700';
+                }
+
+                document.getElementById('profileFactBox').innerHTML = fact ? fact.replace(/\n/g, '<br>') : `<span class="text-zinc-400 italic">Сформированный манифест отсутствует.</span>`;
+
+                const errorRes = db.exec(`SELECT severity, date, topic, error_text, correct_text FROM errors WHERE student_id = ${studentId} ORDER BY id DESC`);
+                const errTbody = document.getElementById('profileErrorsTableBody');
+                
+                if (errorRes.length === 0 || errorRes[0].values.length === 0) {
+                    errTbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-zinc-400">Лог сбоев чист</td></tr>`;
+                } else {
+                    errTbody.innerHTML = errorRes[0].values.map(r => {
+                        let indicator = '🟣';
+                        if (r[0] === 'HIGH') indicator = '🔴';
+                        if (r[0] === 'MEDIUM') indicator = '🟡';
+                        return `
+                            <tr class="border-b border-zinc-100">
+                                <td class="p-3 text-center text-sm">${indicator}</td>
+                                <td class="p-3 text-zinc-400 font-mono">${r[1]||'—'}</td>
+                                <td class="p-3 font-bold text-zinc-700 truncate max-w-[140px]">${r[2]||'—'}</td>
+                                <td class="p-3 text-rose-600 font-mono font-bold">${r[3]||'—'}</td>
+                                <td class="p-3 text-violet-600 font-mono font-bold">${r[4]||'—'}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+                switchView('studentProfile');
+            } catch(e) { showNotification('❌', 'Ошибка считывания данных'); }
+        }
+
+        function copyManifestText() {
+            const text = document.getElementById('profileFactBox').textContent;
+            if (!text || text.includes('отсутствует')) return;
+            navigator.clipboard.writeText(text).then(() => showNotification('📋', 'Текст скопирован в буфер'));
+        }
+
+        function markManifestAsSent() {
+            if (!currentOpenStudentId) return;
+            db.run(`UPDATE students SET sent = 1 WHERE id = ?`, [currentOpenStudentId]);
+            syncStorage();
+            showNotification('🚀', 'Архивировано. Сводка отправлена.');
+            openStudentWorkspace(currentOpenStudentId);
+        }
+
+        function editManifestText() {
+            if (!currentOpenStudentId) return;
+            const factBox = document.getElementById('profileFactBox');
+            
+            if (!isEditingManifest) {
+                const currentRes = db.exec(`SELECT fact FROM students WHERE id = ${currentOpenStudentId}`);
+                const currentText = currentRes[0]?.values[0][0] || '';
+                factBox.innerHTML = `<textarea id="manifestInlineEditor" class="w-full min-h-[140px] text-sm p-2 border border-zinc-300 rounded-lg focus:outline-none focus:border-violet-500 font-sans leading-relaxed">${currentText}</textarea>`;
+                isEditingManifest = true;
+            } else {
+                const updatedText = document.getElementById('manifestInlineEditor').value;
+                db.run(`UPDATE students SET fact = ? WHERE id = ?`, [updatedText, currentOpenStudentId]);
+                syncStorage();
+                isEditingManifest = false;
+                showNotification('💾', 'Изменения сохранены');
+                openStudentWorkspace(currentOpenStudentId);
+            }
+        }
+
+        function deleteCurrentStudent() {
+            if (currentOpenStudentId && confirm('Удалить учетную запись безвозвратно?')) {
+                db.run(`DELETE FROM errors WHERE student_id = ?`, [currentOpenStudentId]);
+                db.run(`DELETE FROM students WHERE id = ?`, [currentOpenStudentId]);
+                syncStorage();
+                showNotification('🗑', 'Запись полностью ликвидирована');
+                switchView('students');
+            }
+        }
+
+        function openAddModal() {
+            document.getElementById('addStudentModal').classList.add('active');
+            document.getElementById('modalErrorsListContainer').innerHTML = '';
+            addNewErrorRowToForm();
+        }
+
+        function closeAddModal() {
+            document.getElementById('addStudentModal').classList.remove('active');
+            document.getElementById('addStudentForm').reset();
+            updateFormErrorRowsCounter();
+        }
+
+        function addNewErrorRowToForm() {
+            const container = document.getElementById('modalErrorsListContainer');
+            const row = document.createElement('div');
+            row.className = "p-3 bg-zinc-50 border border-zinc-200 rounded-xl flex flex-col gap-2 relative form-error-row shadow-sm animate-fadeIn";
+            row.innerHTML = `
+                <button type="button" onclick="this.closest('.form-error-row').remove(); updateFormErrorRowsCounter();" class="absolute -top-2 -right-2 w-6 h-6 bg-white border border-zinc-200 rounded-full flex items-center justify-center text-xs text-zinc-400 hover:text-rose-500 shadow-md"><i class="fas fa-times"></i></button>
+                <div class="grid grid-cols-4 gap-2">
+                    <input type="text" placeholder="Дата" class="w-full p-2.5 border border-zinc-200 rounded-lg text-xs focus:outline-none focus:border-violet-500 font-mono" />
+                    <input type="text" placeholder="Тема" class="w-full p-2.5 border border-zinc-200 rounded-lg text-xs focus:outline-none focus:border-violet-500" />
+                    <input type="text" placeholder="Ошибка" class="w-full p-2.5 border border-zinc-200 rounded-lg text-xs focus:outline-none focus:border-violet-500 text-rose-600 font-mono" />
+                    <input type="text" placeholder="Верный ответ" class="w-full p-2.5 border border-zinc-200 rounded-lg text-xs focus:outline-none focus:border-violet-500 text-violet-600 font-mono" />
+                </div>
+                <div class="flex items-center gap-4 mt-1 bg-white p-1.5 px-2.5 rounded-lg border border-zinc-100">
+                    <span class="text-[11px] uppercase font-bold text-zinc-400 tracking-wider">Критичность:</span>
+                    <label class="inline-flex items-center text-xs gap-1.5 cursor-pointer font-semibold"><input type="radio" class="accent-violet-600" name="sev_${Date.now()}_${Math.random()}" value="LOW" /> 🟣 Low</label>
+                    <label class="inline-flex items-center text-xs gap-1.5 cursor-pointer font-semibold"><input type="radio" class="accent-violet-600" name="sev_${Date.now()}_${Math.random()}" value="MEDIUM" checked /> 🟡 Med</label>
+                    <label class="inline-flex items-center text-xs gap-1.5 cursor-pointer font-semibold"><input type="radio" class="accent-violet-600" name="sev_${Date.now()}_${Math.random()}" value="HIGH" /> 🔴 High</label>
+                </div>
+            `;
+            container.appendChild(row);
+            updateFormErrorRowsCounter();
+        }
+
+        function updateFormErrorRowsCounter() {
+            const count = document.querySelectorAll('.form-error-row').length;
+            document.getElementById('modalErrorCountLabel').textContent = `${count} фиксаций`;
+        }
+
+        function submitStudentForm(e) {
+            e.preventDefault();
+            const name = document.getElementById('modalName').value.trim();
+            const cls = document.getElementById('modalClass').value.trim();
+            const desc = document.getElementById('modalDesc').value.trim();
+            const fact = document.getElementById('modalFact').value.trim();
+
+            try {
+                let studentId;
+                const stmt = db.prepare('SELECT id FROM students WHERE name = :name');
+                const row = stmt.getAsObject({ ':name': name });
+                stmt.free();
+                
+                if (row && row.id) {
+                    studentId = row.id;
+                    db.run('UPDATE students SET class_name = ?, error_description = ?, fact = ? WHERE id = ?', [cls, desc, fact, studentId]);
+                } else {
+                    db.run('INSERT INTO students (name, class_name, error_description, fact) VALUES (?, ?, ?, ?)', [name, cls, desc, fact]);
+                    studentId = db.exec('SELECT last_insert_rowid()')[0].values[0][0];
+                }
+
+                document.querySelectorAll('.form-error-row').forEach(rowEl => {
+                    const inputs = rowEl.querySelectorAll('input[type="text"]');
+                    const radioChecked = rowEl.querySelector('input[type="radio"]:checked');
+                    if (inputs[1].value.trim() || inputs[2].value.trim()) {
+                        db.run('INSERT INTO errors (student_id, date, topic, error_text, correct_text, severity) VALUES (?, ?, ?, ?, ?, ?)',
+                            [studentId, inputs[0].value.trim(), inputs[1].value.trim(), inputs[2].value.trim(), inputs[3].value.trim(), radioChecked ? radioChecked.value : 'MEDIUM']);
+                    }
+                });
+
+                syncStorage();
+                closeAddModal();
+                showNotification('✨', 'Траектория успешно обновлена/интегрирована');
+                renderDashboardView();
+            } catch(err) { showNotification('❌', 'Сбой выполнения транзакции'); }
+        }
+
+        function triggerImport() { document.getElementById('hiddenImportInput').click(); }
+        
+        function handleFileImport(e) {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const parsed = JSON.parse(evt.target.result);
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(s => {
+                            let sid;
+                            const stmt = db.prepare('SELECT id FROM students WHERE name = :name');
+                            const row = stmt.getAsObject({ ':name': s.name });
+                            stmt.free();
+                            
+                            if (row && row.id) {
+                                sid = row.id;
+                                db.run('UPDATE students SET class_name = ?, error_description = ?, fact = ?, sent = ? WHERE id = ?', 
+                                    [s.class_name || '—', s.error_description, s.fact, s.sent ? 1 : 0, sid]);
+                            } else {
+                                db.run('INSERT INTO students (name, class_name, error_description, fact, sent) VALUES (?, ?, ?, ?, ?)', 
+                                    [s.name, s.class_name || '—', s.error_description, s.fact, s.sent ? 1 : 0]);
+                                sid = db.exec('SELECT last_insert_rowid()')[0].values[0][0];
+                            }
+
+                            if (Array.isArray(s.errors)) {
+                                s.errors.forEach(err => {
+                                    db.run('INSERT INTO errors (student_id, date, topic, error_text, correct_text, severity) VALUES (?, ?, ?, ?, ?, ?)',
+                                        [sid, err.date, err.topic, err.error_text, err.correct_text, err.severity || 'MEDIUM']);
+                                });
+                            }
+                        });
+                        syncStorage();
+                        showNotification('📦', 'Данные синхронизированы в единый профиль ученика');
+                        renderDashboardView();
+                    }
+                } catch(err) { showNotification('❌', 'Неверный формат JSON'); }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportDatabaseFile() {
+            try {
+                const data = db.export();
+                const blob = new Blob([data], { type: 'application/x-sqlite3' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `trajectories_core.db`;
+                a.click();
+                showNotification('🗄', 'Файл СУБД .DB выгружен');
+            } catch(e) { showNotification('❌', 'Ошибка экспорта'); }
+        }
+
+        function updateClock() {
+            document.getElementById('systemDate').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function showNotification(icon, text) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastIcon').textContent = icon;
+            document.getElementById('toastMessage').textContent = text;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        document.addEventListener('DOMContentLoaded', initEngine);
+    </script>
+</body>
+</html>
